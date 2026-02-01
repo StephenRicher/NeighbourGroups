@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def k_medoids(dist_matrix, k, max_iter=100, random_seed=42):
     """Vectorised K-medoids clustering using Lloyd's heuristic."""
     rng = np.random.default_rng(random_seed)

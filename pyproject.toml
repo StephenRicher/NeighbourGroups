@@ -24,7 +24,8 @@ dependencies = [
     "treecluster (>=1.0.5,<2.0.0)",
     "scikit-learn (>=1.8.0,<2.0.0)",
     "biopython (>=1.86,<2.0)",
-    "pyclustering (>=0.10.1.2,<0.11.0.0)"
+    "pyclustering (>=0.10.1.2,<0.11.0.0)",
+    "seaborn (>=0.13.2,<0.14.0)"
 ]
 
 [project.scripts]
@@ -33,13 +34,9 @@ dependencies = [
 [tool.poetry]
 packages = [{include = "*", from="src"}]
 
-[[tool.poetry.source]]
-name = "gel-pypi"
-url = "https://artifactory.aws.gel.ac/artifactory/api/pypi/pypi/simple"
-priority = "primary"
-
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.14.14"
+pre-commit = "^4.5.1"
 
 [tool.ruff]
 src = ["src", "tests"]
