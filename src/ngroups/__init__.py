@@ -1,5 +1,11 @@
-#!/usr/bin/env python3
+"""Command line interface for NeighbourGroups.
 
-from . import main
-from . import _version
-from . import parseArgs
+Attributes:
+    __package_name__ (Literal["ngroups"]): the package name.
+    __version__ (str): the version of the package.
+"""
+
+from importlib.metadata import version
+
+__package_name__ = "neighbourgroups"
+__version__ = version(__package_name__)
