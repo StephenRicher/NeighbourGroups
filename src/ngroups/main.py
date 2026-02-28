@@ -19,7 +19,7 @@ def splitTestTrain(
     if not (0 < trainSize < 1):
         logging.error(f'--trainSize {trainSize} not in range (0, 1).')
         return 1
-    data = pd.read_csv(data).astype(str)
+    data = pd.read_csv(data, sep='\t').astype(str)
     IDcol = data.columns[0] if IDcol is None else IDcol
     data = data.set_index(IDcol)
 
@@ -82,19 +82,18 @@ def testAll(prefix: str):
     # Process full tree and add fullNG labels
     linkageMatrix, labels = readTree(prefix, mode='full')
 
-    with open(f'{prefix}-adjustedRandIndex.csv', 'w') as fh:
-        print('NeighbourGroup', 'AdjRand', sep=',', file=fh)
-        models = glob.glob(f'{prefix}-*-trained.pkl')
-        for model in models:
-            nGroup = model.split('-')[-2]
-            if nGroup == 'final':
-                continue
-            adjRand = testNG(prefix, data.copy(), linkageMatrix, labels, nGroup)
-            print(nGroup, adjRand, sep=',', file=fh)
-    # Write score to stdout
-    with open(f'{prefix}-adjustedRandIndex.csv', 'r') as fh:
-        for line in fh:
-            print(line.strip('\n'))
+    scores = {}
+    models = sorted(glob.glob(f'{prefix}-*-trained.pkl'))
+    for model in models:
+        nGroup = model.split('-')[-2]
+        if nGroup == 'final':
+            continue
+        adjRand = testNG(prefix, data.copy(), linkageMatrix, labels, nGroup)
+        scores[int(nGroup)] = adjRand
+    print('NeighbourGroup', 'AdjRand', sep=',')
+    for nGroup in sorted(scores):
+        adjRand = scores[nGroup]
+        print(nGroup, adjRand, sep=',')
 
 
 def runNG(model: str, data: str, col: str = 'NG'):

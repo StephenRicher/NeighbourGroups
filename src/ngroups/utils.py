@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import os
-import pickle
+import joblib
 import logging
 import requests
 import numpy as np
@@ -58,7 +58,7 @@ def readTree(prefix: str, mode: str):
 
 def processNewick(
         linkageMatrix: np.array, labels: np.array, nGroup: int, name: str):
-    clusters = fcluster(linkageMatrix, t=nGroup, criterion='maxclust')
+    clusters = fcluster(linkageMatrix, t=int(nGroup), criterion='maxclust')
     labelsID = pd.DataFrame(clusters, labels, columns=[name])
     return labelsID
 
@@ -80,15 +80,6 @@ def trainModel(data: pd.DataFrame, featureCols: list, seed: int = 42):
     model = model.fit(X, y)
     return model
 
-
-def writePickle(name: str, model):
-    with open(name, 'wb') as fh:
-        pickle.dump(model, fh)
-
-def readPickle(name: str):
-    with open(name, 'rb') as fh:
-        return pickle.load(fh)
-
 def readFull(prefix: str):
     """ Read full dataset """
     # Read test data to extract isolate IDs
@@ -103,7 +94,7 @@ def readFull(prefix: str):
 def mergeData(
         prefix: str, data: pd.DataFrame, linkageMatrix: np.array,
         labels: np.array, nGroup: int):
-    model = readPickle(f'{prefix}-{nGroup}-trained.pkl')
+    model = joblib.load(f'{prefix}-{nGroup}-trained.pkl')
     data[f'NG{nGroup}'] = model.predict(data)
     labelsID = processNewick(
         linkageMatrix, labels, nGroup, name=f'NG{nGroup}-truth')
@@ -139,7 +130,7 @@ def trainNG(
             f'are absent from the Newick tree labels.')
     model = trainModel(data, featureCols)
     suffix = 'final-' if full else ''
-    writePickle(f'{prefix}-{nGroup}-{suffix}trained.pkl', model)
+    joblib.dump(model, f'{prefix}-{nGroup}-{suffix}trained.pkl')
 
     if full:
         data = readFull(prefix)
