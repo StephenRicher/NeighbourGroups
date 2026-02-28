@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 from . import __version__
-from .main import splitTestTrain, prepTree, trainAll, testAll, runNG, downloadExample, downloadModel, analyseNG
+from .main import analyseNG, downloadExample, downloadModel, prepTree, runNG, splitTestTrain, testAll, trainAll
 
 logger = logging.getLogger(__name__)
 """logging.Logger: logger instance for the module."""
@@ -93,116 +93,90 @@ def main(argv: list[str] | None = None) -> None:
     downsample_sp.set_defaults(func=downsample)
 
     prepare_sp = subparser.add_parser(
-        'prepare',
+        "prepare",
         description=splitTestTrain.__doc__,
-        help='Split isolates into test and training set.',
-        epilog=parser.epilog)
+        help="Split isolates into test and training set.",
+        epilog=parser.epilog,
+    )
+    prepare_sp.add_argument("prefix", help="File prefix to read/write data.")
+    prepare_sp.add_argument("data", help="Path to data file in .csv format")
     prepare_sp.add_argument(
-        'prefix', help='File prefix to read/write data.')
+        "--trainSize", type=float, default=0.8, help="Proportion of data to use as training (default: %(default)s)"
+    )
     prepare_sp.add_argument(
-        'data', help='Path to data file in .csv format')
+        "--seed", type=int, default=42, help="Seed for reproducing train/test split (default: %(default)s)"
+    )
     prepare_sp.add_argument(
-        '--trainSize', type=float, default=0.8,
-        help='Proportion of data to use as training (default: %(default)s)')
+        "--missingVal", default="unknown", help="Value to replace missing data (default: %(default)s)"
+    )
     prepare_sp.add_argument(
-        '--seed', type=int, default=42,
-        help='Seed for reproducing train/test split (default: %(default)s)')
+        "--IDcol", help="Column index (zero-based) of data corresponding to isolate ID (default: %(default)s)"
+    )
     prepare_sp.add_argument(
-        '--missingVal', default='unknown',
-        help='Value to replace missing data (default: %(default)s)')
-    prepare_sp.add_argument(
-        '--IDcol',
-        help='Column index (zero-based) of data corresponding to '
-             'isolate ID (default: %(default)s)')
-    prepare_sp.add_argument(
-        '--features', nargs="+",
-        help='Column indices (zero-based) of training features. If not '
-             'provided, all columns except index 0 are assumed to be '
-             'training features')
+        "--features",
+        nargs="+",
+        help="Column indices (zero-based) of training features. If not "
+        "provided, all columns except index 0 are assumed to be "
+        "training features",
+    )
     prepare_sp.set_defaults(function=splitTestTrain)
 
     tree_sp = subparser.add_parser(
-        'tree',
-        description=runNG.__doc__,
-        help='Pre-process the Newick trees.',
-        epilog=parser.epilog)
-    tree_sp.add_argument(
-        'prefix', help='File prefix to read/write data.')
-    tree_sp.add_argument(
-        'fullTree', help='Path to full tree in newick format.')
-    tree_sp.add_argument(
-        'trainTree', help='Path to training tree in newick format.')
+        "tree", description=runNG.__doc__, help="Pre-process the Newick trees.", epilog=parser.epilog
+    )
+    tree_sp.add_argument("prefix", help="File prefix to read/write data.")
+    tree_sp.add_argument("fullTree", help="Path to full tree in newick format.")
+    tree_sp.add_argument("trainTree", help="Path to training tree in newick format.")
     tree_sp.set_defaults(function=prepTree)
 
     train_sp = subparser.add_parser(
-        'train',
-        description=trainAll.__doc__,
-        help='Train the CatBoost classifer.',
-        epilog=parser.epilog)
+        "train", description=trainAll.__doc__, help="Train the CatBoost classifer.", epilog=parser.epilog
+    )
+    train_sp.add_argument("prefix", help="File prefix to read/write data.")
+    train_sp.add_argument("nGroup", type=int, nargs="+", help="Number of Neighbour Groups to classify.")
     train_sp.add_argument(
-        'prefix', help='File prefix to read/write data.')
+        "--full",
+        action="store_true",
+        help="Train model using full dataset instead of training subset (default: %(default)s)",
+    )
     train_sp.add_argument(
-        'nGroup', type=int, nargs='+',
-        help='Number of Neighbour Groups to classify.')
-    train_sp.add_argument(
-        '--full', action='store_true',
-        help='Train model using full dataset instead of '
-             'training subset (default: %(default)s)')
-    train_sp.add_argument(
-        '--seed', type=int, default=42,
-        help='Seed for defining random state of '
-             'classifer (default: %(default)s)')
+        "--seed", type=int, default=42, help="Seed for defining random state of classifer (default: %(default)s)"
+    )
     train_sp.set_defaults(function=trainAll)
 
     test_sp = subparser.add_parser(
-        'test',
-        description=testAll.__doc__,
-        help='Test the CatBoost classifer.',
-        epilog=parser.epilog)
-    test_sp.add_argument(
-        'prefix', help='File prefix to read/write data.')
+        "test", description=testAll.__doc__, help="Test the CatBoost classifer.", epilog=parser.epilog
+    )
+    test_sp.add_argument("prefix", help="File prefix to read/write data.")
     test_sp.set_defaults(function=testAll)
 
     predict_sp = subparser.add_parser(
-        'predict',
-        description=runNG.__doc__,
-        help='Classify isolates using the trained model.',
-        epilog=parser.epilog)
-    predict_sp.add_argument(
-        'data', help='Path to data file in .csv format')
-    predict_sp.add_argument(
-        'model', help='Path to trained NeighbourGroup model.')
-    predict_sp.add_argument(
-        '--col', default='NG',
-        help='Column name to write predictions (default: %(default)s)')
+        "predict", description=runNG.__doc__, help="Classify isolates using the trained model.", epilog=parser.epilog
+    )
+    predict_sp.add_argument("data", help="Path to data file in .csv format")
+    predict_sp.add_argument("model", help="Path to trained NeighbourGroup model.")
+    predict_sp.add_argument("--col", default="NG", help="Column name to write predictions (default: %(default)s)")
     predict_sp.set_defaults(function=runNG)
 
     stats_sp = subparser.add_parser(
-        'stats',
-        description=analyseNG.__doc__,
-        help='Interrogate NG relationships.',
-        epilog=parser.epilog)
-    stats_sp.add_argument('prefix', help='File prefix to read/write data.')
+        "stats", description=analyseNG.__doc__, help="Interrogate NG relationships.", epilog=parser.epilog
+    )
+    stats_sp.add_argument("prefix", help="File prefix to read/write data.")
     stats_sp.set_defaults(function=analyseNG)
 
     getdata_sp = subparser.add_parser(
-        'getData',
-        description=downloadExample.__doc__,
-        help='Download example data.',
-        epilog=parser.epilog)
-    getdata_sp.add_argument(
-        '--dir', default='.',
-        help='Directory to save example data (default: %(default)s)')
+        "getData", description=downloadExample.__doc__, help="Download example data.", epilog=parser.epilog
+    )
+    getdata_sp.add_argument("--dir", default=".", help="Directory to save example data (default: %(default)s)")
     getdata_sp.set_defaults(function=downloadExample)
 
     getmodel_sp = subparser.add_parser(
-        'getModel',
+        "getModel",
         description=downloadExample.__doc__,
-        help='Download pre-trained model from publication.',
-        epilog=parser.epilog)
-    getmodel_sp.add_argument(
-        '--dir', default='.',
-        help='Directory to save model (default: %(default)s)')
+        help="Download pre-trained model from publication.",
+        epilog=parser.epilog,
+    )
+    getmodel_sp.add_argument("--dir", default=".", help="Directory to save model (default: %(default)s)")
     getmodel_sp.set_defaults(function=downloadModel)
 
     pargs = parser.parse_args(argv)
