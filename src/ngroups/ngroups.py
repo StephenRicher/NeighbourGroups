@@ -83,14 +83,12 @@ def testAll(prefix: str):
         return 1
     # Process full tree and add fullNG labels
     linkageMatrix, labels = readTree(prefix, mode="full")
-
     scores = {}
-    models = sorted(glob.glob(f"{prefix}-*-trained.pkl"))
-    for model in models:
-        nGroup = model.split("-")[-2]
+    for model_path in sorted(glob.glob(f"{prefix}-*-trained.cbm")):
+        nGroup = model_path.split("-")[-2]
         if nGroup == "final":
             continue
-        adjRand = testNG(prefix, data.copy(), linkageMatrix, labels, nGroup)
+        adjRand = testNG(model_path, data.copy(), linkageMatrix, labels, nGroup)
         scores[int(nGroup)] = adjRand
     print("NeighbourGroup", "AdjRand", sep=",")
     for nGroup in sorted(scores):
@@ -98,11 +96,12 @@ def testAll(prefix: str):
         print(nGroup, adjRand, sep=",")
 
 
-def runNG(model: str, data: str, col: str = "NG"):
+def runNG(model_path: str, data: str, col: str = "NG"):
     """Generate NG classifications using trained model"""
-    data = pd.read_csv(data).astype(str)
-    model = readPickle(model)
-    # Dont overwrite an excisting column
+    data = pd.read_csv(data, low_memory=False, sep="\t").astype(str)
+    model = CatBoostClassifier()
+    model.load_model(model_path)
+    # Dont overwrite an existing column
     assert col not in data.columns
     assert f"{col}-prob" not in data.columns
     data[col] = model.predict(data)

@@ -3,7 +3,6 @@
 import logging
 import os
 
-import joblib
 import numpy as np
 import pandas as pd
 import requests
@@ -11,10 +10,12 @@ from catboost import CatBoostClassifier
 from ete3 import ClusterTree
 from scipy.cluster.hierarchy import fcluster, linkage
 from scipy.spatial.distance import pdist
-from sklearn.compose import ColumnTransformer
+from sklearn.metrics import f1_score
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.model_selection import StratifiedKFold
+
+logger = logging.getLogger(__name__)
+"""logging.Logger: logger instance for the module."""
 
 
 def download(url: str, dir: str):
@@ -63,24 +64,34 @@ def processNewick(linkageMatrix: np.array, labels: np.array, nGroup: int, name: 
     return labelsID
 
 
-def trainModel(data: pd.DataFrame, featureCols: list, seed: int = 42):
-    y = data.pop("trainNG")
-    X = data[featureCols]
-    featureIdx = list(range(len(X.columns)))
-
-    transformers = [("categories", FunctionTransformer(), featureCols)]
-    featureTransformer = ColumnTransformer(transformers=transformers, remainder="drop")
-    model = Pipeline(
-        steps=[
-            ("columnTransform", featureTransformer),
-            (
-                "estimator",
-                CatBoostClassifier(verbose=0, random_seed=seed, allow_writing_files=False, cat_features=featureIdx),
-            ),
-        ]
-    )
-    model = model.fit(X, y)
+def train_model(X: pd.DataFrame, y: pd.Series, seed: int = 42):
+    model = CatBoostClassifier(verbose=0, random_seed=seed, allow_writing_files=False)
+    model.fit(X, y, cat_features=list(range(X.shape[1])))
     return model
+
+
+def train_model_with_cv(X: pd.DataFrame, y: pd.Series, seed: int = 42, cv: int = 5, min_class_eval: int = 5):
+    # Compute class counts
+    class_counts = y.value_counts()
+    eval_classes = class_counts[class_counts >= min_class_eval].index
+    skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=seed)
+    scores = []
+    for train_idx, val_idx in skf.split(X, y):
+        X_train, X_val = X.iloc[train_idx], X.iloc[val_idx]
+        y_train, y_val = y.iloc[train_idx], y.iloc[val_idx]
+        # Train on all classes
+        model = train_model(X_train, y_train, seed=seed)
+        # Evaluate only on sufficiently large classes
+        mask = y_val.isin(eval_classes)
+        y_val_eval = y_val[mask]
+        X_val_eval = X_val[mask]
+        preds = model.predict(X_val_eval)
+        score = f1_score(y_val_eval, preds, average="weighted")
+        scores.append(score)
+    # Fit final model on the full dataset (all classes)
+    final_model = CatBoostClassifier(verbose=0, random_seed=seed, allow_writing_files=False)
+    final_model.fit(X, y, cat_features=list(range(X.shape[1])))
+    return final_model, np.array(scores)
 
 
 def readFull(prefix: str):
@@ -94,16 +105,17 @@ def readFull(prefix: str):
     return data
 
 
-def mergeData(prefix: str, data: pd.DataFrame, linkageMatrix: np.array, labels: np.array, nGroup: int):
-    model = joblib.load(f"{prefix}-{nGroup}-trained.pkl")
+def mergeData(model_path: str, data: pd.DataFrame, linkageMatrix: np.array, labels: np.array, nGroup: int):
+    model = CatBoostClassifier()
+    model.load_model(model_path)
     data[f"NG{nGroup}"] = model.predict(data)
     labelsID = processNewick(linkageMatrix, labels, nGroup, name=f"NG{nGroup}-truth")
     data = pd.merge(data, labelsID, left_index=True, right_index=True, how="outer")
     return data
 
 
-def testNG(prefix: str, data: pd.DataFrame, linkageMatrix: np.array, labels: np.array, nGroup: int):
-    data = mergeData(prefix, data, linkageMatrix, labels, nGroup)
+def testNG(model_path: str, data: pd.DataFrame, linkageMatrix: np.array, labels: np.array, nGroup: int):
+    data = mergeData(model_path, data, linkageMatrix, labels, nGroup)
     testSubset = data.loc[data["test"]]
     adjRand = adjusted_rand_score(testSubset[f"NG{nGroup}"], testSubset[f"NG{nGroup}-truth"])
     return adjRand
@@ -123,19 +135,34 @@ def trainNG(
     featureCols = data.columns
     sourceCount = len(data)
     data = pd.merge(data, labelsID, left_index=True, right_index=True, how="left")
+    X = data[featureCols]
+    y = data.pop("trainNG")
     missing = sourceCount - len(data)
     if missing > 0:
         logging.error(
             f"{missing} of {sourceCount} isolates ({missing / sourceCount:.2%}) are absent from the Newick tree labels."
         )
-    model = trainModel(data, featureCols)
+    if full:
+        model, scores = train_model_with_cv(X, y, seed=seed)
+        logger.info(f"CV F1 scores: {scores}")
+        logger.info(f"Mean CV F1: {np.mean(scores):.4f}")
+        logger.info(
+            "Cross-validation completed nGroup=%s | fold_scores=%s | mean_f1=%.4f | std_f1=%.4f",
+            nGroup,
+            np.round(scores, 4),
+            np.mean(scores),
+            np.std(scores),
+        )
+    else:
+        model = train_model(X, y, seed=seed)
     suffix = "final-" if full else ""
-    joblib.dump(model, f"{prefix}-{nGroup}-{suffix}trained.pkl")
+    model_path = f"{prefix}-{nGroup}-{suffix}trained.cbm"
+    model.save_model(model_path)
 
     if full:
         data = readFull(prefix)
         linkageMatrix, labels = readTree(prefix, mode="full")
-        data = mergeData(prefix, data, linkageMatrix, labels, nGroup)
+        data = mergeData(model_path, data, linkageMatrix, labels, nGroup)
         data[f"NG{nGroup}"] = model.predict(data)
         data.index = data.index.rename("id")
         data.to_csv(f"{prefix}-{nGroup}-final.csv")
