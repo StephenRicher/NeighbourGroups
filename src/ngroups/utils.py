@@ -66,7 +66,7 @@ def processNewick(linkageMatrix: np.array, labels: np.array, nGroup: int, name: 
 
 def train_model(X: pd.DataFrame, y: pd.Series, seed: int = 42):
     model = CatBoostClassifier(verbose=0, random_seed=seed, allow_writing_files=False)
-    model.fit(X, y, cat_features=list(range(X.shape[1])))
+    model.fit(X, y, cat_features=list(X.columns))
     return model
 
 
@@ -135,7 +135,7 @@ def trainNG(
     featureCols = data.columns
     sourceCount = len(data)
     data = pd.merge(data, labelsID, left_index=True, right_index=True, how="left")
-    X = data[featureCols]
+    X = prepare_categorical(data[featureCols])
     y = data.pop("trainNG")
     missing = sourceCount - len(data)
     if missing > 0:
@@ -181,3 +181,26 @@ def validColumns(cols, features, IDcol):
             valid = False
             logging.error(f"{feature} not in input header.")
     return valid
+
+
+def prepare_categorical(X: pd.DataFrame) -> pd.DataFrame:
+    X = X.copy()
+    for col in X.columns:
+        # Try numeric conversion
+        numeric_col = pd.to_numeric(X[col], errors="coerce")
+        # If conversion didn't destroy most values → treat as numeric
+        if numeric_col.notna().sum() >= 0.9 * len(X[col]):
+            # If values are effectively integers
+            if (numeric_col.dropna() % 1 == 0).all():
+                X[col] = numeric_col.astype("Int64")
+            else:
+                # keep float but round consistently
+                X[col] = numeric_col.round(6)
+        else:
+            # Keep original values (true categorical)
+            X[col] = X[col].astype("string")
+    # Final canonical string representation
+    X = X.astype("string")
+    # Explicit missing token
+    X = X.fillna("missing")
+    return X

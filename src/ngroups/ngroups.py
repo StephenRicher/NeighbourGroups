@@ -96,7 +96,7 @@ def testAll(prefix: str):
         print(nGroup, adjRand, sep=",")
 
 
-def runNG(model_path: str, data: str, mlst_cols: list[str], col: str = "NG"):
+def runNG(model_path: str, data: str, col: str = "NG"):
     """Generate NG classifications using trained model"""
     data = pd.read_csv(data, low_memory=False, sep="\t")
     model = CatBoostClassifier()
@@ -104,7 +104,7 @@ def runNG(model_path: str, data: str, mlst_cols: list[str], col: str = "NG"):
     # Dont overwrite an existing column
     assert col not in data.columns
     assert f"{col}-prob" not in data.columns
-    model_data = data[mlst_cols].fillna('missing')
+    model_data = prepare_categorical(data[model.feature_names_])
     data[col] = model.predict(model_data)
     data[f"{col}-prob"] = model.predict_proba(model_data).max(axis=1)
     data.to_csv(sys.stdout, index=False)

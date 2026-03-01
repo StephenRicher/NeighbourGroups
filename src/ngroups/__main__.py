@@ -161,22 +161,6 @@ def main(argv: list[str] | None = None) -> None:
     )
     predict_sp.add_argument("data", help="Path to data file in .csv format")
     predict_sp.add_argument("model_path", help="Path to trained NeighbourGroup model.")
-    predict_sp.add_argument(
-        "--mlst-cols",
-        dest="mlst_cols",
-        metavar="X",
-        nargs="+",
-        default=[
-            "aspA",
-            "glnA",
-            "gltA",
-            "glyA",
-            "pgm",
-            "tkt",
-            "uncA",
-        ],
-        help="Column names for 7-locus MLST scheme (default: %(default)s)",
-    )
     predict_sp.add_argument("--col", default="NG", help="Column name to write predictions (default: %(default)s)")
     predict_sp.set_defaults(func=runNG)
 
