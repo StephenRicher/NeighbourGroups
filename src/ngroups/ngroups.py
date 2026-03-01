@@ -96,16 +96,17 @@ def testAll(prefix: str):
         print(nGroup, adjRand, sep=",")
 
 
-def runNG(model_path: str, data: str, col: str = "NG"):
+def runNG(model_path: str, data: str, mlst_cols: list[str], col: str = "NG"):
     """Generate NG classifications using trained model"""
-    data = pd.read_csv(data, low_memory=False, sep="\t").astype(str)
+    data = pd.read_csv(data, low_memory=False, sep="\t")
     model = CatBoostClassifier()
     model.load_model(model_path)
     # Dont overwrite an existing column
     assert col not in data.columns
     assert f"{col}-prob" not in data.columns
-    data[col] = model.predict(data)
-    data[f"{col}-prob"] = model.predict_proba(data).max(axis=1)
+    model_data = data[mlst_cols].fillna('missing')
+    data[col] = model.predict(model_data)
+    data[f"{col}-prob"] = model.predict_proba(model_data).max(axis=1)
     data.to_csv(sys.stdout, index=False)
 
 
