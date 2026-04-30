@@ -15,55 +15,77 @@
 
 
 ## Installation
-
 ```bash
 pip install git+https://github.com/bgrdessislava/NeighbourGroups.git
 ```
 
 ## Usage
-Neighbour Groups can be run from the command line and additional help is provided via ```ngroups --help```.
-Each sub-command also has help documentation (e.g. `ngroups train --help`).
-The following commands can be used to reproduce the findings of the publication.
+NeighbourGroups is a command-line tool. Run:
+```bash
+ngroups --help
+```
+
+Each subcommand also provides help:
+```bash
+ngroups train --help
+```
+
+The steps below reproduce the analysis from the publication.
 
 ### 1. Download Publication Data
-The publication data can be downloaded as below or obtained directly from the [GitHub repository](https://github.com/bgrdessislava/NeighbourGroups/tree/main/data).
-The following command will download the data and save it to the directory `./data`.
-
+Download the example dataset:
 ```bash
 ngroups get-data --outdir data
 gunzip data/*gz
 ```
 
+Alternatively, download directly from the [GitHub repository](https://github.com/bgrdessislava/NeighbourGroups/tree/main/data).
+
 ### 2. Downsample the data
-At the time of writing there were 45,773 isolates available on PubMLST. 
-Many of these are duplicates and the NeighbourGroup analysis is not computationally practical on such a large number.
-The downsample command can be used to downsample the isolates, according to the cgMLST profiles in such a way to preserve maximum diversity.
+The full dataset (~45k isolates) is too large for efficient analysis. Downsampling preserves diversity while reducing size.
 
 ```bash
-ngroups downsample --target-n 10000 --projection-dim 128 --max-missing 0.05 --random-state 42 --cluster-factor 4 data/global_jejuni_coli_isolates-45k-profiles.tsv > data/jejuni_coli-10k-downsample.tsv
+ngroups downsample \
+  --target-n 10000 \
+  --projection-dim 128 \
+  --max-missing 0.05 \
+  --random-state 42 \
+  --cluster-factor 4 \
+  data/global_jejuni_coli_isolates-45k-profiles.tsv \
+  > global_jejuni_coli-10k-downsample.tsv
 ```
 
-The above command will output a list of 10,000 isolate IDs - these can be fed back into PubMLST to retrieve the 7-MLST profiles for the selected isolates.
-This data has already been provided for you for this example see `data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt`.
+This outputs selected isolate IDs, which can be used to retrieve 7-MLST profiles.
+
+For convenience, example 7-MLST data is already provided:
+```bash
+data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt`.
+```
 
 ### 3. Split Training and Testing Data
-Once the data is downsampled - the user must download the 7 MLST metadata  of the data the user must create **two** phylogenetic trees in newick format; this step must be performed externally.
-The following command splits the example data into a training and testing data set.
-The first argument of most `ngroups` commands is the `prefix` - this defines the directory and filename prefix of Neighbour Groups outputs
-For example, below each output file is prefixed with `./example` (e.g. `./example-test.csv`).
-The prefix should be kept the same through a given analysis workflow.
-
+Split the dataset into training and test sets.
 ```bash
-ngroups prepare example data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt --trainSize 0.8 --seed 42 --features aspA glnA gltA glyA pgm tkt uncA
+ngroups prepare example \
+  data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt \
+  --trainSize 0.8 \
+  --seed 42 \
+  --features aspA glnA gltA glyA pgm tkt uncA
 ```
 
-### 4. Build Phylogenetic Trees
-Following splitting of the data the user must create **two** phylogenetic trees in newick format; this step must be performed externally.
-The published methodology builds a Minnimum Spamming tree (MST) from the core MLST loci using [PubMLST](https://pubmlst.org/).
-However, in principle, any phylogenetic approach can be used.
-The key requirement is that the labels of the Newick trees match the corresponding isolate IDs of the full and training data set.
+*Notes:*
+- The prefix (example) defines all output files (e.g. example-train.csv)
+- Use the same prefix throughout the workflow
 
-*Note: The example data downloaded in step 1 already included pre-computed newick trees from the 10,000 isolates selected as part of the downsample. If using the example data, skip to step 4.*
+### 4. Build Phylogenetic Trees
+You must generate two Newick-format trees externally:
+- *Full tree:* built from all isolates
+- *Training tree:* built from the training subset
+
+The original method uses a minimum spanning tree (MST) from PubMLST, but any phylogenetic method is acceptable.
+
+Important: Tree labels must exactly match isolate IDs.
+
+*Note:* If using the provided example data, precomputed trees are included—skip this step.`
 
 #### Full Tree
 The first tree is constructed from the full set of isolates - in the example these are saved to ``output/example-full.csv``.
@@ -76,47 +98,48 @@ The training tree is used to extract target Neigbour Groups and train the classi
 
 
 ### 5. Pre-process the Trees
+Convert Newick trees into linkage matrices:
 
 ```bash
-ngroups tree example data/global_jejuni_coli_isolates-10k-downsample-full.nwk data/global_jejuni_coli_isolates-10k-downsample-train.nwk
+ngroups tree example \
+  data/global_jejuni_coli_isolates-10k-downsample-full.nwk \
+  data/global_jejuni_coli_isolates-10k-downsample-train.nwk
 ```
 
 ### 6. Training the Model
-After completing the previous steps the mode can be trained as follows.
-The number of Neighbour Groups to classify must be specified as positional arguments following the prefix and a seed can be set for reproducibility.
-Multiple Neighbour Group clusters can be provided to train different models at different tree hierarchy levels.
-
+Train models across multiple Neighbour Group (NG) levels:
 ```bash
 ngroups train example $(seq 2 50) --seed 42
 ```
 
-### 7. Testing the Model
-Following training, the `ngroups test` command can be used to assess classifier performance.
-For each Neighbour Group (e.g. 22 and 44 above) an adjusted Rand index will be computed and written to stdout.
+- Each value (e.g. 2–50) corresponds to a different clustering resolution
+- Multiple models are trained in one run
 
+### 7. Testing the Model
+Evaluate model performance using Adjusted Rand Index:
 ```bash
 ngroups test example > adjustedRandScores.csv
 ```
 
 ### 8. Re-train the Model with Full Data
-Following testing, the model can be retrained using the full dataset.
-To retrain the model re-run the `ngroups train` command from step 5 with an additional `--full` flag.
-This will output a final trained model at the location `{prefix}-{nGroup}-final-trained.pkl`.
-For example, in the following command the model will be written to `./example-20-final-trained.pkl`
-
-In addition, a final CSV final will be written to `{prefix}-{nGroup}-final.csv` which includes the NG predictions and original tree groups for all of the input data.
+After evaluation, retrain using the full dataset:
 
 ```bash
 ngroups train example 44 --full --seed 100
 ```
 
+*Outputs:*
+- Model: `example-44-final-trained.cbm`
+- Predictions: `example-44-final.csv`
+
 ### 9. Using the Model
-Now the classifier is trained, it can be used on other data.
-The `ngroups predict` command requires a path to the data (CSV format) and the trained model.
-
-*Note: The header names of the CSV must include the features names used when training the model.*
-
+Apply a trained model to new data:
 ```bash
-ngroups predict data/C.jejuni-UKisolates.csv example-20-final-trained.pkl \
+ngroups predict \
+  coli_jejuni_MLST_isolates.csv \
+  example-44-final-trained.cbm \
   > C.jejuni-UKisolates-classified.csv
 ```
+
+*Requirements:*
+- Column names must match training feature names

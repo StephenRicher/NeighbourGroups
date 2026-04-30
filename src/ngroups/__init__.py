@@ -1,7 +1,7 @@
 """Command line interface for NeighbourGroups.
 
 Attributes:
-    __package_name__ (Literal["ngroups"]): the package name.
+    __package_name__ (Literal["neighbourgroups"]): the package name.
     __version__ (str): the version of the package.
 """
 
