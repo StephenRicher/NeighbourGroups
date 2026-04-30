@@ -109,12 +109,12 @@ def runNG(model_path: str, data: str, col: str = "NG"):
     data.to_csv(sys.stdout, index=False)
 
 
-def downloadExample(dir: str = "."):
+def downloadExample(outdir: str = "."):
     """Download example dataset from GitHub repo"""
-    os.makedirs(dir, exist_ok=True)
+    os.makedirs(outdir, exist_ok=True)
     prefix = "https://raw.githubusercontent.com/bgrdessislava/NeighbourGroups/main/data"
-    download(f"{prefix}/global_jejuni_coli_isolates-45k-profiles.tsv.gz", dir)
-    download(f"{prefix}/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt.gz", dir)
-    download(f"{prefix}/global_jejuni_coli_isolates-10k-downsample-full.nwk", dir)
-    download(f"{prefix}/global_jejuni_coli_isolates-10k-downsample-train.nwk", dir)
-    download(f"{prefix}/global_jejuni_coli_isolates_all_isolates.txt.gz", dir)
+    download(f"{prefix}/global_jejuni_coli_isolates-45k-profiles.tsv.gz", outdir)
+    download(f"{prefix}/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt.gz", outdir)
+    download(f"{prefix}/global_jejuni_coli_isolates-10k-downsample-full.nwk", outdir)
+    download(f"{prefix}/global_jejuni_coli_isolates-10k-downsample-train.nwk", outdir)
+    download(f"{prefix}/global_jejuni_coli_isolates_all_isolates.txt.gz", outdir)
