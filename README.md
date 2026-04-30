@@ -33,6 +33,7 @@ The following command will download the data and save it to the directory `./dat
 
 ```bash
 ngroups get-data --outdir data
+gunzip data/*gz
 ```
 
 ### 2. Downsample the data
@@ -41,7 +42,7 @@ Many of these are duplicates and the NeighbourGroup analysis is not computationa
 The downsample command can be used to downsample the isolates, according to the cgMLST profiles in such a way to preserve maximum diversity.
 
 ```bash
-ngroups downsample --target-n 10000 --projection-dim 128 --max-missing 0.05 --random-state 42 --cluster-factor 4 global_jejuni_coli_isolates-45k-profiles.tsv > jejuni_coli-10k-downsample.tsv
+ngroups downsample --target-n 10000 --projection-dim 128 --max-missing 0.05 --random-state 42 --cluster-factor 4 data/global_jejuni_coli_isolates-45k-profiles.tsv > data/jejuni_coli-10k-downsample.tsv
 ```
 
 The above command will output a list of 10,000 isolate IDs - these can be fed back into PubMLST to retrieve the 7-MLST profiles for the selected isolates.
@@ -55,16 +56,7 @@ For example, below each output file is prefixed with `./example` (e.g. `./exampl
 The prefix should be kept the same through a given analysis workflow.
 
 ```bash
-ngroups prepare example data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt --trainSize 0.8 --seed 42
-```
-
-If required, the user can specify which columns correspond to the isolate ID and which correspond to the relevant training features.
-For example, if the isolate ID is labelled `id` and we want to only use `aspA` and `glnA` as features then the command would be as follows.
-If no values are specified, the isolated ID is assumed to be the first column and all subsequent columns are treated as features.
-
-```bash
-ngroups prepare example data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt \
-  --IDcol id --features aspA glnA --trainSize 0.8 --seed 42
+ngroups prepare example data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt --trainSize 0.8 --seed 42 --features aspA glnA gltA glyA pgm tkt uncA
 ```
 
 ### 4. Build Phylogenetic Trees
