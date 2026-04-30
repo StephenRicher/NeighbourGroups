@@ -8,7 +8,7 @@ from pathlib import Path
 
 from . import __version__
 from .downsample import downsample
-from .ngroups import analyseNG, downloadExample, downloadModel, prepTree, runNG, splitTestTrain, testAll, trainAll
+from .ngroups import downloadExample, prepTree, runNG, splitTestTrain, testAll, trainAll
 
 logging.basicConfig(
     level=logging.INFO,
@@ -101,7 +101,7 @@ def main(argv: list[str] | None = None) -> None:
     prepare_sp = subparser.add_parser(
         "prepare",
         description=splitTestTrain.__doc__,
-        help="Split isolates into test and training set.",
+        help="Split isolates into test and training set",
         epilog=parser.epilog,
     )
     prepare_sp.add_argument("prefix", help="File prefix to read/write data.")
@@ -128,7 +128,7 @@ def main(argv: list[str] | None = None) -> None:
     prepare_sp.set_defaults(func=splitTestTrain)
 
     tree_sp = subparser.add_parser(
-        "tree", description=prepTree.__doc__, help="Pre-process the Newick trees.", epilog=parser.epilog
+        "tree", description=prepTree.__doc__, help="Pre-process the Newick trees", epilog=parser.epilog
     )
     tree_sp.add_argument("prefix", help="File prefix to read/write data.")
     tree_sp.add_argument("fullTree", help="Path to full tree in newick format.")
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> None:
     tree_sp.set_defaults(func=prepTree)
 
     train_sp = subparser.add_parser(
-        "train", description=trainAll.__doc__, help="Train the CatBoost classifer.", epilog=parser.epilog
+        "train", description=trainAll.__doc__, help="Train the CatBoost classifer", epilog=parser.epilog
     )
     train_sp.add_argument("prefix", help="File prefix to read/write data.")
     train_sp.add_argument("nGroup", type=int, nargs="+", help="Number of Neighbour Groups to classify.")
@@ -151,39 +151,24 @@ def main(argv: list[str] | None = None) -> None:
     train_sp.set_defaults(func=trainAll)
 
     test_sp = subparser.add_parser(
-        "test", description=testAll.__doc__, help="Test the CatBoost classifer.", epilog=parser.epilog
+        "test", description=testAll.__doc__, help="Test the CatBoost classifer", epilog=parser.epilog
     )
     test_sp.add_argument("prefix", help="File prefix to read/write data.")
     test_sp.set_defaults(func=testAll)
 
     predict_sp = subparser.add_parser(
-        "predict", description=runNG.__doc__, help="Classify isolates using the trained model.", epilog=parser.epilog
+        "predict", description=runNG.__doc__, help="Classify isolates using the trained model", epilog=parser.epilog
     )
     predict_sp.add_argument("data", help="Path to data file in .csv format")
     predict_sp.add_argument("model_path", help="Path to trained NeighbourGroup model.")
     predict_sp.add_argument("--col", default="NG", help="Column name to write predictions (default: %(default)s)")
     predict_sp.set_defaults(func=runNG)
 
-    stats_sp = subparser.add_parser(
-        "stats", description=analyseNG.__doc__, help="Interrogate NG relationships.", epilog=parser.epilog
-    )
-    stats_sp.add_argument("prefix", help="File prefix to read/write data.")
-    stats_sp.set_defaults(func=analyseNG)
-
     getdata_sp = subparser.add_parser(
-        "getData", description=downloadExample.__doc__, help="Download example data.", epilog=parser.epilog
+        "get-data", description=downloadExample.__doc__, help="Download publication data", epilog=parser.epilog
     )
-    getdata_sp.add_argument("--dir", default=".", help="Directory to save example data (default: %(default)s)")
+    getdata_sp.add_argument("--outdir", default=".", help="Directory to save data (default: %(default)s)")
     getdata_sp.set_defaults(func=downloadExample)
-
-    getmodel_sp = subparser.add_parser(
-        "getModel",
-        description=downloadExample.__doc__,
-        help="Download pre-trained model from publication.",
-        epilog=parser.epilog,
-    )
-    getmodel_sp.add_argument("--dir", default=".", help="Directory to save model (default: %(default)s)")
-    getmodel_sp.set_defaults(func=downloadModel)
 
     pargs = parser.parse_args(argv)
     if "func" not in pargs:

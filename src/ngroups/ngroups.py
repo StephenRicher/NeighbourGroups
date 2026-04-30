@@ -7,7 +7,6 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-import seaborn as sns
 from sklearn.model_selection import train_test_split
 
 from .utils import *
@@ -110,59 +109,12 @@ def runNG(model_path: str, data: str, col: str = "NG"):
     data.to_csv(sys.stdout, index=False)
 
 
-def analyseNG(prefix: str):
-    allData = glob.glob(f"{prefix}-*-final.csv")
-    for data in allData:
-        nGroup = data.split("-")[-2]
-        data = pd.read_csv(data).astype(str).set_index("id")
-        distances = pd.read_pickle(f"{prefix}-full-cophenetic.pkl")
-        ngDistances = processNGdistances(data, distances, nGroup)
-        ngDistances.to_csv(f"{prefix}-{nGroup}-meanNGdist.csv")
-        ngDistances = ngDistances.pivot(index="NG_r", columns="NG_c").droplevel(0, axis=1)
-        fig = sns.clustermap(ngDistances, cmap="viridis")
-        ax = fig.ax_heatmap
-        ax.set_xlabel(f"Neighbour Group ({nGroup})")
-        ax.set_ylabel(f"Neighbour Group ({nGroup})")
-        fig.cax.set_visible(False)
-        fig.savefig(f"{prefix}-{nGroup}-meanNGdist.svg")
-
-
-def processNGdistances(data: pd.DataFrame, distances: pd.DataFrame, nGroup: int):
-    groupNames = data[f"NG{nGroup}-truth"].unique()
-    ngDistances = {}
-    for g1 in groupNames:
-        g1_id = data.loc[data[f"NG{nGroup}-truth"] == g1].index.tolist()
-        sub = distances[g1_id].copy()
-        for g2 in groupNames:
-            if g1 == g2:
-                ngDistances[(g1, g2)] = 0
-            else:
-                g2_id = data.loc[data[f"NG{nGroup}-truth"] == g2].index.tolist()
-                dist = sub.loc[g2_id].stack().dropna().mean()
-                ngDistances[(g1, g2)] = dist
-                ngDistances[(g2, g1)] = dist
-    ngDistances = (
-        pd.Series(ngDistances)
-        .reset_index()
-        .rename({"level_0": "NG_r", "level_1": "NG_c", 0: "distance"}, axis=1)
-        .astype({"NG_r": int, "NG_c": int, "distance": float})
-    )
-    return ngDistances
-
-
 def downloadExample(dir: str = "."):
     """Download example dataset from GitHub repo"""
     os.makedirs(dir, exist_ok=True)
     prefix = "https://raw.githubusercontent.com/bgrdessislava/NeighbourGroups/main/data"
-    download(f"{prefix}/C.jejuni-UKisolates.csv", dir)
-    download(f"{prefix}/C.jejuni-full.nwk", dir)
-    download(f"{prefix}/C.jejuni-train.nwk", dir)
-    download(f"{prefix}/C.jejuni-UKisolates-CC.csv", dir)
-
-
-def downloadModel(path: str = "."):
-    """Download pre-trained model from publication."""
-    prefix = "https://raw.githubusercontent.com/bgrdessislava/NeighbourGroups/main/data"
-    logging.error("Not Implemented")
-    return 1
-    download(f"{prefix}/C.jejuni-UKisolates.pkl", dir)
+    download(f"{prefix}/global_jejuni_coli_isolates-45k-profiles.tsv.gz", dir)
+    download(f"{prefix}/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt.gz", dir)
+    download(f"{prefix}/global_jejuni_coli_isolates-10k-downsample-full.nwk", dir)
+    download(f"{prefix}/global_jejuni_coli_isolates-10k-downsample-train.nwk", dir)
+    download(f"{prefix}/global_jejuni_coli_isolates_all_isolates.txt.gz", dir)
