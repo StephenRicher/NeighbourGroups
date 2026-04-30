@@ -12,8 +12,6 @@
     * [6. Testing the Model](#6-testing-the-model)
     * [7. Re-train the Model with Full Data](#7-re-train-the-model-with-full-data)
     * [8. Using the Model](#8-using-the-model)
-  * [Downstream Analysis](#downstream-analysis)
-    * [Investigating Neighbour Group Relationships](#investigating-neighbour-group-relationships)
 
 
 ## Installation
@@ -122,15 +120,3 @@ The `ngroups predict` command requires a path to the data (CSV format) and the t
 ngroups predict data/C.jejuni-UKisolates.csv example-20-final-trained.pkl \
   > C.jejuni-UKisolates-classified.csv
 ```
-
-## Downstream Analysis
-
-### Investigating Neighbour Group Relationships
-After training the final model (step 7) the `ngroups stats` command can be used to assess relationships between Neighbour Group clusters.
-This tool computes the mean distance between isolates of each pair of Neighbour Groups.
-A heatmap (SVG) and CSV file are written to `{prefix}-{nGroup}-meanNGdist.*`, as below.
-
-```bash
-ngroups stats example
-```
-![ngdist](./README_files/example-20-meanNGdist.svg)
