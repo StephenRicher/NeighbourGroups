@@ -90,7 +90,7 @@ def train_model_with_cv(X: pd.DataFrame, y: pd.Series, seed: int = 42, cv: int =
         scores.append(score)
     # Fit final model on the full dataset (all classes)
     final_model = CatBoostClassifier(verbose=0, random_seed=seed, allow_writing_files=False)
-    final_model.fit(X, y, cat_features=list(range(X.shape[1])))
+    final_model.fit(X, y, cat_features=list(X.columns))
     return final_model, np.array(scores)
 
 
