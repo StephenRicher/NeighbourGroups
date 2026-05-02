@@ -111,10 +111,10 @@ ngroups tree analysis/global_jejuni_coli \
 ### 6. Training the Model
 Train models across multiple Neighbour Group (NG) levels:
 ```bash
-ngroups train analysis/global_jejuni_coli $(seq 2 50) --seed 42
+ngroups train analysis/global_jejuni_coli 43 44 45 --seed 42
 ```
 
-- Each value (e.g. 2–50) corresponds to a different clustering resolution
+- Each value corresponds to a different clustering resolution
 - Multiple models are trained in one run
 
 ### 7. Testing the Model
