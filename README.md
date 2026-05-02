@@ -35,8 +35,7 @@ The steps below reproduce the analysis from the publication.
 ### 1. Download Publication Data
 Download the example dataset:
 ```bash
-ngroups get-data --outdir data
-gunzip data/*gz
+ngroups get-data --outdir analysis
 ```
 
 Alternatively, download directly from the [GitHub repository](https://github.com/bgrdessislava/NeighbourGroups/tree/main/data).
@@ -51,22 +50,22 @@ ngroups downsample \
   --max-missing 0.05 \
   --random-state 42 \
   --cluster-factor 4 \
-  data/global_jejuni_coli_isolates-45k-profiles.tsv \
-  > global_jejuni_coli-10k-downsample.tsv
+  analysis/global_jejuni_coli_isolates-45k-profiles.tsv \
+  > analysis/global_jejuni_coli-10k-downsample.tsv
 ```
 
 This outputs selected isolate IDs, which can be used to retrieve 7-MLST profiles.
 
 For convenience, example 7-MLST data is already provided:
 ```bash
-data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt`.
+MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt
 ```
 
 ### 3. Split Training and Testing Data
 Split the dataset into training and test sets.
 ```bash
-ngroups prepare example \
-  data/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt \
+ngroups prepare analysis/example \
+  analysis/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt \
   --trainSize 0.8 \
   --seed 42 \
   --features aspA glnA gltA glyA pgm tkt uncA
@@ -88,12 +87,12 @@ Important: Tree labels must exactly match isolate IDs.
 *Note:* If using the provided example data, precomputed trees are included—skip this step.`
 
 #### Full Tree
-The first tree is constructed from the full set of isolates - in the example these are saved to ``output/example-full.csv``.
+The first tree is constructed from the full set of isolates - in the example these are saved to ``analysis/example-full.csv``.
 The full tree will be used following model training to assess the prediction accuracy of the hold-out test set.
 In addition the full tree can later be used to re-train a final model on the full data set, following validation.
 
 #### Training Tree
-The second tree is constructed from the training subset of isolates - in the example these are saved to ``output/example-train.csv``.
+The second tree is constructed from the training subset of isolates - in the example these are saved to ``analysis/example-train.csv``.
 The training tree is used to extract target Neigbour Groups and train the classifier model.
 
 
@@ -101,7 +100,7 @@ The training tree is used to extract target Neigbour Groups and train the classi
 Convert Newick trees into linkage matrices:
 
 ```bash
-ngroups tree example \
+ngroups tree analysis/example \
   data/global_jejuni_coli_isolates-10k-downsample-full.nwk \
   data/global_jejuni_coli_isolates-10k-downsample-train.nwk
 ```
@@ -109,7 +108,7 @@ ngroups tree example \
 ### 6. Training the Model
 Train models across multiple Neighbour Group (NG) levels:
 ```bash
-ngroups train example $(seq 2 50) --seed 42
+ngroups train analysis/example $(seq 2 50) --seed 42
 ```
 
 - Each value (e.g. 2–50) corresponds to a different clustering resolution
@@ -118,27 +117,27 @@ ngroups train example $(seq 2 50) --seed 42
 ### 7. Testing the Model
 Evaluate model performance using Adjusted Rand Index:
 ```bash
-ngroups test example > adjustedRandScores.csv
+ngroups test analysis/example > analysis/adjustedRandScores.csv
 ```
 
 ### 8. Re-train the Model with Full Data
 After evaluation, retrain using the full dataset:
 
 ```bash
-ngroups train example 44 --full --seed 100
+ngroups train analysis/example 44 --full --seed 100
 ```
 
 *Outputs:*
-- Model: `example-44-final-trained.cbm`
-- Predictions: `example-44-final.csv`
+- Model: `analysis/example-44-final-trained.cbm`
+- Predictions: `analysis/example-44-final.csv`
 
 ### 9. Using the Model
 Apply a trained model to new data:
 ```bash
 ngroups predict \
   coli_jejuni_MLST_isolates.csv \
-  example-44-final-trained.cbm \
-  > C.jejuni-UKisolates-classified.csv
+  analysis/example-44-final-trained.cbm \
+  > coli_jejuni_MLST_isolates-classified.csv
 ```
 
 *Requirements:*

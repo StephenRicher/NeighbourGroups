@@ -262,7 +262,8 @@ def downloadExample(outdir: str = "."):
 
     for fname in files:
         url = f"{prefix}/{fname}"
+        gunzip = fname.endswith(".gz")
         logger.info("Downloading %s", fname)
-        download(url, outdir)
+        download(url, outdir, gunzip=gunzip)
 
     logger.info("All example data downloaded successfully to %s", outdir)

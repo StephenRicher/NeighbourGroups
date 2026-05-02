@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import gzip
 import logging
 import os
+import shutil
 
 import numpy as np
 import pandas as pd
@@ -18,7 +20,7 @@ logger = logging.getLogger(__name__)
 """logging.Logger: logger instance for the module."""
 
 
-def download(url: str, outdir: str):
+def download(url: str, outdir: str, gunzip: bool = False):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -33,29 +35,51 @@ def download(url: str, outdir: str):
         logger.error("Request failed for %s | error=%s", url, str(e))
         raise
 
-    if r.ok:
-        total_bytes = 0
-
-        with open(file_path, "wb") as f:
-            for chunk in r.iter_content(chunk_size=1024 * 8):
-                if chunk:
-                    f.write(chunk)
-                    total_bytes += len(chunk)
-
-        logger.info(
-            "Download complete | file=%s | size=%.2f MB | path=%s",
-            filename,
-            total_bytes / (1024 * 1024),
-            file_path,
-        )
-    else:
+    if not r.ok:
         logger.error(
             "Download failed | file=%s | status_code=%d | response=%s",
             filename,
             r.status_code,
-            r.text[:200],  # truncate to avoid huge logs
+            r.text[:200],
         )
         raise RuntimeError(f"Failed to download {url}")
+
+    total_bytes = 0
+    with open(file_path, "wb") as f:
+        for chunk in r.iter_content(chunk_size=1024 * 8):
+            if chunk:
+                f.write(chunk)
+                total_bytes += len(chunk)
+
+    logger.info(
+        "Download complete | file=%s | size=%.2f MB | path=%s",
+        filename,
+        total_bytes / (1024 * 1024),
+        file_path,
+    )
+
+    # Optional gunzip
+    if gunzip:
+        if not file_path.endswith(".gz"):
+            logger.warning("gunzip=True but file does not end with .gz | file=%s", filename)
+            return
+
+        out_path = file_path[:-3]
+
+        logger.info("Decompressing gzip file | input=%s | output=%s", file_path, out_path)
+
+        try:
+            with gzip.open(file_path, "rb") as f_in, open(out_path, "wb") as f_out:
+                shutil.copyfileobj(f_in, f_out)
+        except Exception as e:
+            logger.error("Failed to decompress %s | error=%s", file_path, str(e))
+            raise
+
+        logger.info("Decompression complete | output=%s", out_path)
+
+        # Optionally remove original .gz
+        os.remove(file_path)
+        logger.info("Removed compressed file | path=%s", file_path)
 
 
 def readNewick(nwk):
