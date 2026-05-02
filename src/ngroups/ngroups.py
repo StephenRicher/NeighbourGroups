@@ -180,7 +180,7 @@ def testAll(prefix: str):
 
         logger.info("Evaluating model | nGroup=%s | path=%s", nGroup, model_path)
 
-        adjRand = testNG(model_path, data.copy(), linkageMatrix, labels, nGroup)
+        adjRand = testNG(model_path, data.copy(), linkageMatrix, labels, int(nGroup))
 
         logger.info("Result | nGroup=%s | AdjustedRand=%.4f", nGroup, adjRand)
 

@@ -232,7 +232,8 @@ def mergeData(model_path: str, data: pd.DataFrame, linkageMatrix: np.array, labe
     model = CatBoostClassifier()
     model.load_model(model_path)
 
-    data[f"NG{nGroup}"] = model.predict(data)
+    model_data = prepare_categorical(data[list(model.feature_names_)])
+    data[f"NG{nGroup}"] = model.predict(model_data)
 
     labelsID = processNewick(linkageMatrix, labels, nGroup, name=f"NG{nGroup}-truth")
     data = pd.merge(data, labelsID, left_index=True, right_index=True, how="outer")
