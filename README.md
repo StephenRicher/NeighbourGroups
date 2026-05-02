@@ -84,7 +84,7 @@ The original method uses a minimum spanning tree (MST) from PubMLST, but any phy
 
 Important: Tree labels must exactly match isolate IDs.
 
-*Note:* If using the provided example data, precomputed trees are included—skip this step.`
+*Note:* If using the provided example data, precomputed trees are included—skip this step.
 
 #### Full Tree
 The first tree is constructed from the full set of isolates - in the example these are saved to ``analysis/global_jejuni_coli-full.csv``.
@@ -104,6 +104,9 @@ ngroups tree analysis/global_jejuni_coli \
   analysis/global_jejuni_coli_isolates-10k-downsample-full.nwk \
   analysis/global_jejuni_coli_isolates-10k-downsample-train.nwk
 ```
+
+*Note:* This step is memory intensive and should be run on a system with atleast 8Gb of RAM. This step will also take up to 3 hours to run.
+
 
 ### 6. Training the Model
 Train models across multiple Neighbour Group (NG) levels:
