@@ -58,21 +58,21 @@ This outputs selected isolate IDs, which can be used to retrieve 7-MLST profiles
 
 For convenience, example 7-MLST data is already provided:
 ```bash
-MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt
+MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.tsv
 ```
 
 ### 3. Split Training and Testing Data
 Split the dataset into training and test sets.
 ```bash
-ngroups prepare analysis/example \
-  analysis/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.txt \
+ngroups prepare analysis/global_jejuni_coli \
+  analysis/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.tsv \
   --trainSize 0.8 \
   --seed 42 \
   --features aspA glnA gltA glyA pgm tkt uncA
 ```
 
 *Notes:*
-- The prefix (example) defines all output files (e.g. example-train.csv)
+- The prefix (global_jejuni_coli) defines all output files (e.g. `analysis/global_jejuni_coli-train.csv`)
 - Use the same prefix throughout the workflow
 
 ### 4. Build Phylogenetic Trees
@@ -87,12 +87,12 @@ Important: Tree labels must exactly match isolate IDs.
 *Note:* If using the provided example data, precomputed trees are included—skip this step.`
 
 #### Full Tree
-The first tree is constructed from the full set of isolates - in the example these are saved to ``analysis/example-full.csv``.
+The first tree is constructed from the full set of isolates - in the example these are saved to ``analysis/global_jejuni_coli-full.csv``.
 The full tree will be used following model training to assess the prediction accuracy of the hold-out test set.
 In addition the full tree can later be used to re-train a final model on the full data set, following validation.
 
 #### Training Tree
-The second tree is constructed from the training subset of isolates - in the example these are saved to ``analysis/example-train.csv``.
+The second tree is constructed from the training subset of isolates - in the example these are saved to ``analysis/global_jejuni_coli-train.csv``.
 The training tree is used to extract target Neigbour Groups and train the classifier model.
 
 
@@ -100,15 +100,15 @@ The training tree is used to extract target Neigbour Groups and train the classi
 Convert Newick trees into linkage matrices:
 
 ```bash
-ngroups tree analysis/example \
-  data/global_jejuni_coli_isolates-10k-downsample-full.nwk \
-  data/global_jejuni_coli_isolates-10k-downsample-train.nwk
+ngroups tree analysis/global_jejuni_coli \
+  analysis/global_jejuni_coli_isolates-10k-downsample-full.nwk \
+  analysis/global_jejuni_coli_isolates-10k-downsample-train.nwk
 ```
 
 ### 6. Training the Model
 Train models across multiple Neighbour Group (NG) levels:
 ```bash
-ngroups train analysis/example $(seq 2 50) --seed 42
+ngroups train analysis/global_jejuni_coli $(seq 2 50) --seed 42
 ```
 
 - Each value (e.g. 2–50) corresponds to a different clustering resolution
@@ -117,27 +117,27 @@ ngroups train analysis/example $(seq 2 50) --seed 42
 ### 7. Testing the Model
 Evaluate model performance using Adjusted Rand Index:
 ```bash
-ngroups test analysis/example > analysis/adjustedRandScores.csv
+ngroups test analysis/global_jejuni_coli > analysis/adjustedRandScores.csv
 ```
 
 ### 8. Re-train the Model with Full Data
 After evaluation, retrain using the full dataset:
 
 ```bash
-ngroups train analysis/example 44 --full --seed 100
+ngroups train analysis/global_jejuni_coli 44 --full --seed 100
 ```
 
 *Outputs:*
-- Model: `analysis/example-44-final-trained.cbm`
-- Predictions: `analysis/example-44-final.csv`
+- Model: `analysis/global_jejuni_coli-44-final-trained.cbm`
+- Predictions: `analysis/global_jejuni_coli-44-final.csv`
 
 ### 9. Using the Model
 Apply a trained model to new data:
 ```bash
 ngroups predict \
-  coli_jejuni_MLST_isolates.csv \
-  analysis/example-44-final-trained.cbm \
-  > coli_jejuni_MLST_isolates-classified.csv
+  analysis/global_jejuni_coli_isolates_all_isolates.tsv \
+  analysis/global_jejuni_coli-44-final-trained.cbm \
+  > analysis/global_coli_jejuni_isolates-classified.csv
 ```
 
 *Requirements:*

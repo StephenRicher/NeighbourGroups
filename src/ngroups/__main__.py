@@ -105,7 +105,7 @@ def main(argv: list[str] | None = None) -> None:
         epilog=parser.epilog,
     )
     prepare_sp.add_argument("prefix", help="File prefix to read/write data.")
-    prepare_sp.add_argument("data", help="Path to data file in .csv format")
+    prepare_sp.add_argument("data", help="Path to data file in .tsv format")
     prepare_sp.add_argument(
         "--trainSize", type=float, default=0.8, help="Proportion of data to use as training (default: %(default)s)"
     )
@@ -159,7 +159,7 @@ def main(argv: list[str] | None = None) -> None:
     predict_sp = subparser.add_parser(
         "predict", description=runNG.__doc__, help="Classify isolates using the trained model", epilog=parser.epilog
     )
-    predict_sp.add_argument("data", help="Path to data file in .csv format")
+    predict_sp.add_argument("data", help="Path to data file in .tsv format")
     predict_sp.add_argument("model_path", help="Path to trained NeighbourGroup model.")
     predict_sp.add_argument("--col", default="NG", help="Column name to write predictions (default: %(default)s)")
     predict_sp.set_defaults(func=runNG)
