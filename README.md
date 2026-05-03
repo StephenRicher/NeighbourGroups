@@ -15,7 +15,7 @@
     * [8. Using the Model](#8-using-the-model)
 
 ## Requirements
-- Python >= 3.12
+- Python >= 3.13
 - ~8 GB RAM recommended (for large datasets)
 - :contentReference[oaicite:0]{index=0}
 
