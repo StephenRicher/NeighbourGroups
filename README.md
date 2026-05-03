@@ -74,7 +74,7 @@ poetry run ngroups downsample \
   --random-state 42 \
   --cluster-factor 4 \
   analysis/global_jejuni_coli_isolates-45k-profiles.tsv \
-  > analysis/global_jejuni_coli-10k-downsample.tsv
+  > analysis/global_jejuni_coli-10k-downsample-isolate-ids.tsv
 ```
 
 This outputs selected isolate IDs, which can be used to retrieve 7-MLST profiles.
