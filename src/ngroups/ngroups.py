@@ -258,6 +258,7 @@ def downloadExample(outdir: str = "."):
         "global_jejuni_coli_isolates-10k-downsample-full.nwk",
         "global_jejuni_coli_isolates-10k-downsample-train.nwk",
         "global_jejuni_coli_isolates_with_metadata.tsv.gz",
+        "global_jejuni_coli_isolates_with_metadata-classified.csv.gz"
     ]
 
     for fname in files:
