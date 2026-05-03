@@ -2,7 +2,8 @@
 
 ## Table of contents
 
-  * [Installation](#installation)
+  * [Requirements](#requirements)
+  * [Installation](#installation-and-setup)
   * [Usage](#usage)
     * [1. Download Publication Data](#1-download-publication-data)
     * [2. Split Training and Testing Data](#2-split-training-and-testing-data)
@@ -13,21 +14,43 @@
     * [7. Re-train the Model with Full Data](#7-re-train-the-model-with-full-data)
     * [8. Using the Model](#8-using-the-model)
 
+## Requirements
+- Python >= 3.12
+- ~8 GB RAM recommended (for large datasets)
+- :contentReference[oaicite:0]{index=0}
 
-## Installation
+## Installation and Setup
+
+### Option 1: Using Poetry (recommended)
+
+```bash
+git clone https://github.com/bgrdessislava/NeighbourGroups.git
+cd NeighbourGroups
+
+poetry install
+```
+
+### Option 2: Using pip
+
 ```bash
 pip install git+https://github.com/bgrdessislava/NeighbourGroups.git
 ```
 
 ## Usage
-NeighbourGroups is a command-line tool. Run:
+NeighbourGroups is a command-line tool.
+
+> **Command prefix**
+> - If installed with Poetry: prefix commands with `poetry run`
+> - If installed with pip: run commands directly
+
+Examples below use:
 ```bash
-ngroups --help
+poetry run ngroups ...
 ```
 
 Each subcommand also provides help:
 ```bash
-ngroups train --help
+poetry run ngroups train --help
 ```
 
 The steps below reproduce the analysis from the publication.
@@ -35,7 +58,7 @@ The steps below reproduce the analysis from the publication.
 ### 1. Download Publication Data
 Download the example dataset:
 ```bash
-ngroups get-data --outdir analysis
+poetry run ngroups get-data --outdir analysis
 ```
 
 Alternatively, download directly from the [GitHub repository](https://github.com/bgrdessislava/NeighbourGroups/tree/main/data).
@@ -44,7 +67,7 @@ Alternatively, download directly from the [GitHub repository](https://github.com
 The full dataset (~45k isolates) is too large for efficient analysis. Downsampling preserves diversity while reducing size.
 
 ```bash
-ngroups downsample \
+poetry run ngroups downsample \
   --target-n 10000 \
   --projection-dim 128 \
   --max-missing 0.05 \
@@ -64,7 +87,7 @@ MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.ts
 ### 3. Split Training and Testing Data
 Split the dataset into training and test sets.
 ```bash
-ngroups prepare analysis/global_jejuni_coli \
+poetry run ngroups prepare analysis/global_jejuni_coli \
   analysis/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.tsv \
   --trainSize 0.8 \
   --seed 42 \
@@ -100,7 +123,7 @@ The training tree is used to extract target Neigbour Groups and train the classi
 Convert Newick trees into linkage matrices:
 
 ```bash
-ngroups tree analysis/global_jejuni_coli \
+poetry run ngroups tree analysis/global_jejuni_coli \
   analysis/global_jejuni_coli_isolates-10k-downsample-full.nwk \
   analysis/global_jejuni_coli_isolates-10k-downsample-train.nwk
 ```
@@ -111,7 +134,7 @@ ngroups tree analysis/global_jejuni_coli \
 ### 6. Training the Model
 Train models across multiple Neighbour Group (NG) levels:
 ```bash
-ngroups train analysis/global_jejuni_coli 43 44 45 --seed 42
+poetry run ngroups train analysis/global_jejuni_coli 43 44 45 --seed 42
 ```
 
 - Each value corresponds to a different clustering resolution
@@ -120,14 +143,14 @@ ngroups train analysis/global_jejuni_coli 43 44 45 --seed 42
 ### 7. Testing the Model
 Evaluate model performance using Adjusted Rand Index:
 ```bash
-ngroups test analysis/global_jejuni_coli > analysis/adjustedRandScores.csv
+poetry run ngroups test analysis/global_jejuni_coli > analysis/adjustedRandScores.csv
 ```
 
 ### 8. Re-train the Model with Full Data
 After evaluation, retrain using the full dataset:
 
 ```bash
-ngroups train analysis/global_jejuni_coli 44 --full --seed 100
+poetry run ngroups train analysis/global_jejuni_coli 44 --full --seed 100
 ```
 
 *Outputs:*
@@ -137,7 +160,7 @@ ngroups train analysis/global_jejuni_coli 44 --full --seed 100
 ### 9. Using the Model
 Apply a trained model to new data:
 ```bash
-ngroups predict \
+poetry run ngroups predict \
   analysis/global_jejuni_coli_isolates_with_metadata.tsv \
   analysis/global_jejuni_coli-44-final-trained.cbm \
   > analysis/global_jejuni_coli_isolates_with_metadata-classified.csv
