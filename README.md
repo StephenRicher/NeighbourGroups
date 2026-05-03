@@ -140,7 +140,7 @@ Apply a trained model to new data:
 ngroups predict \
   analysis/global_jejuni_coli_isolates_with_metadata.tsv \
   analysis/global_jejuni_coli-44-final-trained.cbm \
-  > analysis/global_coli_jejuni_isolates-classified.csv
+  > analysis/global_jejuni_coli_isolates_with_metadata-classified.csv
 ```
 
 *Requirements:*
