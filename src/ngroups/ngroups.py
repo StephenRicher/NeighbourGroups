@@ -227,7 +227,7 @@ def runNG(model_path: str, data: str, col: str = "NG"):
     model_data = prepare_categorical(data[expected_features])
 
     logger.info("Running predictions")
-    preds = model.predict(model_data)
+    preds = model.predict(model_data).ravel()
     probs = model.predict_proba(model_data).max(axis=1)
 
     data[col] = preds
