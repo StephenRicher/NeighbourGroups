@@ -3,7 +3,7 @@
 ## Table of contents
 
   * [Requirements](#requirements)
-  * [Installation](#installation-and-setup)
+  * [Installation and Setup](#installation-and-setup)
   * [Usage](#usage)
     * [1. Download Publication Data](#1-download-publication-data)
     * [2. Split Training and Testing Data](#2-split-training-and-testing-data)
@@ -17,7 +17,6 @@
 ## Requirements
 - Python >= 3.13
 - ~8 GB RAM recommended (for large datasets)
-- :contentReference[oaicite:0]{index=0}
 
 ## Installation and Setup
 
@@ -48,9 +47,9 @@ Examples below use:
 poetry run ngroups ...
 ```
 
-Each subcommand also provides help:
+Each command and subcommand provides help:
 ```bash
-poetry run ngroups train --help
+poetry run ngroups --help
 ```
 
 The steps below reproduce the analysis from the publication.
@@ -143,7 +142,7 @@ poetry run ngroups train analysis/global_jejuni_coli 43 44 45 --seed 42
 ### 7. Testing the Model
 Evaluate model performance using Adjusted Rand Index:
 ```bash
-poetry run ngroups test analysis/global_jejuni_coli > analysis/adjustedRandScores.csv
+poetry run ngroups test analysis/global_jejuni_coli > analysis/global_jejuni_coli-adj-rand-scores.csv
 ```
 
 ### 8. Re-train the Model with Full Data
