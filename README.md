@@ -81,14 +81,14 @@ This outputs selected isolate IDs, which can be used to retrieve 7-MLST profiles
 
 For convenience, example 7-MLST data is already provided:
 ```bash
-MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.tsv
+global_jejuni_coli_isolates-10k-downsample.tsv
 ```
 
 ### 3. Split Training and Testing Data
 Split the dataset into training and test sets.
 ```bash
 poetry run ngroups prepare analysis/global_jejuni_coli \
-  analysis/MGENPaper_Rerun_diverse_global_jejuni_coli_isolates_7MLST_only-10k-downsample.tsv \
+  analysis/global_jejuni_coli_isolates-10k-downsample.tsv \
   --trainSize 0.8 \
   --seed 42 \
   --features aspA glnA gltA glyA pgm tkt uncA
