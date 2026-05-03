@@ -138,7 +138,7 @@ ngroups train analysis/global_jejuni_coli 44 --full --seed 100
 Apply a trained model to new data:
 ```bash
 ngroups predict \
-  analysis/global_jejuni_coli_isolates_all_isolates.tsv \
+  analysis/global_jejuni_coli_isolates_with_metadata.tsv \
   analysis/global_jejuni_coli-44-final-trained.cbm \
   > analysis/global_coli_jejuni_isolates-classified.csv
 ```
